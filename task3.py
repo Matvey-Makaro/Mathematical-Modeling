@@ -26,8 +26,8 @@ def calculate_frequencies(simulations: list) -> list:
 
 def task3() -> None:
     num_of_simulations = 1000000
-    p_a = 0.8
-    p_b_given_a = 0.6
+    p_a = 0.4
+    p_b_given_a = 0.9
     simulations_list = simulate_complex_dependent_events(p_a, p_b_given_a, num_of_simulations)
 
     print("###########################################################################################################")
@@ -42,11 +42,12 @@ def task3() -> None:
 
     p_b = p_a * p_b_given_a + (1 - p_a) * (1 - p_b_given_a)
     p_a_given_b = p_b_given_a * p_a / p_b
-
+    p_a_given_not_b = (p_a - p_b * p_a_given_b) / (1 - p_b)
     expected_a_b = p_a * p_b_given_a
-    expected_a_not_b = (1 - p_b) * (1 - p_a_given_b)
+    expected_a_not_b = (1 - p_b) * p_a_given_not_b
     expected_not_a_b = (1 - p_a) * (1 - p_b_given_a)
     expected_not_a_not_b = 1 - expected_a_b - expected_a_not_b - expected_not_a_b
+
     print()
     print("expected AB:", expected_a_b)
     print("expected A!B", expected_a_not_b)
