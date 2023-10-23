@@ -4,10 +4,12 @@ from sympy import S
 import sympy as sp
 from sympy import *
 from task1 import task1
+from task2 import task2
 
 
 def main() -> None:
-    task1()
+    # task1()
+    task2()
 
     # # Введите многочлен с консоли
     # # polynomial_str = input("Введите многочлен в формате Python (например, 'x**2 + 2*x - 3'): ")

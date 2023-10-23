@@ -33,6 +33,7 @@ def create_plot_2d(f_x, f_z, x, z, x_values, z_values):
 
     plt.show()
 
+
 def get_rv_generator(F, var, low, high) -> RVGenerator:
     y = sp.symbols("y")
     is_correct_distr_func = check_distr_func(F, var, low, high)
@@ -73,9 +74,9 @@ def task1() -> None:
     print("F(z):", F_z)
 
     if f_x != f_x_if_z:
-        print("Составляющие двумерной ДСВ зависимы т.к. f(x) != f(x|z)")
+        print("Составляющие двумерной НСВ зависимы т.к. f(x) != f(x|z)")
     else:
-        print("Составляющие двумерной ДСВ независимы т.к. f(x) = f(x|z)")
+        print("Составляющие двумерной НСВ независимы т.к. f(x) = f(x|z)")
 
     M_x = calc_math_expectation(f_x, x, low, high)
     M_z = calc_math_expectation(f_z, z, low, high)
