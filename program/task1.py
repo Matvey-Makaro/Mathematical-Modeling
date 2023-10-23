@@ -23,15 +23,30 @@ def str_to_func(func_str: str):
 
 def create_plot_2d(f_x, f_z, x, z, x_values, z_values):
     vals = np.linspace(0, 1, 100)
-    f_x_values = [f_x.subs(x, v).evalf() for v in vals]
+    # f_x_values = [f_x.subs(x, v).evalf() for v in vals]
     f_z_values = [f_z.subs(z, v).evalf() for v in vals]
 
-    plt.plot(vals, f_x_values, color='red')
+    # plt.plot(vals, f_x_values, color='red')
     plt.plot(vals, f_z_values, color='green')
-    plt.hist(x_values, 30, color='blue', density=1)
+    # plt.hist(x_values, 30, color='blue', density=1)
     plt.hist(z_values, 30, color='black', density=1)
 
     plt.show()
+
+def get_rv_generator(F, var, low, high) -> RVGenerator:
+    y = sp.symbols("y")
+    is_correct_distr_func = check_distr_func(F, var, low, high)
+    if not is_correct_distr_func:
+        print("Incorrect distr func")
+        return
+
+    try:
+        generator = RVGenerator(F, var, y, low, high)
+    except RuntimeError as ex:
+        print(ex)
+        return
+    return generator
+
 
 def task1() -> None:
     random.seed(1000)
@@ -64,62 +79,36 @@ def task1() -> None:
 
     M_x = calc_math_expectation(f_x, x, low, high)
     M_z = calc_math_expectation(f_z, z, low, high)
-
-
     print("M(x) = ", M_x)
     print("M(z) = ", M_z)
 
-    is_correct_distr_func = check_distr_func(F_x, x, low, high)
-    if not is_correct_distr_func:
-        print("Incorrect distr func")
-        return
+    D_x = calc_theoretical_dispersion(f_x, x, low, high)
+    D_z = calc_theoretical_dispersion(f_z, z, low, high)
+    print("D(x) = ", D_x)
+    print("D(z) = ", D_z)
 
-    try:
-        generator = RVGenerator(F_x, x, y, low, high)
-    except RuntimeError as ex:
-        print(ex)
-        return
+    r = calc_theor_correlation(f_x, x, low, high, f_z, z, low, high)
+    print("r: ", r)
 
-    x_values = [generator.generate() for _ in range(5000)]
-
-
-    is_correct_distr_func = check_distr_func(F_z, z, low, high)
-    if not is_correct_distr_func:
-        print("Incorrect distr func")
-        return
-
-    try:
-        generator = RVGenerator(F_z, z, y, low, high)
-    except RuntimeError as ex:
-        print(ex)
-        return
-
-    z_values = [generator.generate() for _ in range(5000)]
-
-    # z_values = []
-    #
-    # for x_val in x_values:
-    #     curr_f = f_z_if_x.subs(x, x_val)
-    #     curr_F = sp.integrate(curr_f, (z, 0, z))
-    #     s_correct_distr_func = check_distr_func(curr_F, z, low, high)
-    #     if not is_correct_distr_func:
-    #         print("Incorrect distr func")
-    #         return
-    #     try:
-    #         generator = RVGenerator(curr_F, z, y, low, high)
-    #     except RuntimeError as ex:
-    #         print(ex)
-    #         return
-    #     z_values.append(generator.generate())
-
-    print("x_values: ", x_values)
-    print("z_values: ", z_values)
+    num_of_vals_to_generate = 5000
+    x_generator = get_rv_generator(F_x, x, low, high)
+    x_values = [x_generator.generate() for _ in range(num_of_vals_to_generate)]
+    z_generator = get_rv_generator(F_z, z, low, high)
+    z_values = [z_generator.generate() for _ in range(num_of_vals_to_generate)]
 
     stat_M_x = calc_statistical_mean(x_values)
     stat_M_z = calc_statistical_mean(z_values)
-
     print("stat_M_x:", stat_M_x)
     print("stat_M_z:", stat_M_z)
+
+
+    stat_D_x = calc_dispersion(x_values)
+    stat_D_z = calc_dispersion(z_values)
+    print("stat_D_x:", stat_D_x)
+    print("stat_D_z:", stat_D_z)
+
+    stat_r = calc_correlation(x_values, z_values)
+    print("stat_r: ", stat_r)
 
     create_plot_2d(f_x, f_z, x, z, x_values, z_values)
 

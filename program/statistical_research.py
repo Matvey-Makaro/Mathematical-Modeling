@@ -121,3 +121,29 @@ def test_hypothesis_uniform(statistical_series, significance_level, a: int, b: i
     print(f"Chi2: {curr_chi2}")
     print(f"Crit Chi2: {crit_chi2}")
     return curr_chi2 < crit_chi2
+
+def calc_theor_cov(f_x, x, low_x, high_x, f_y, y, low_y, high_y):
+    M_x = calc_math_expectation(f_x, x, low_x, high_x)
+    M_y = calc_math_expectation(f_y, y, low_y, high_y)
+    first_integral = sp.integrate((x - M_x) * (y - M_y), (x, low_x, high_x))
+    return sp.integrate(first_integral, (y, low_y, high_y))
+
+def calc_theor_correlation(f_x, x, low_x, high_x, f_y, y, low_y, high_y):
+    cov = calc_theor_cov(f_x, x, low_x, high_x, f_y, y, low_y, high_y)
+    D_x = calc_theoretical_dispersion(f_x, x, low_x, high_x)
+    D_y = calc_theoretical_dispersion(f_y, y, low_y, high_y)
+    return cov / (pow(D_x, 1/2) * pow(D_y, 1/2))
+
+
+def calc_correlation(x_values, y_values):
+    x_y_mean = 0
+    for i in range(len(x_values)):
+        x_y_mean += x_values[i] * y_values[i]
+    x_y_mean /= len(x_values)
+    x_mean = calc_statistical_mean(x_values)
+    y_mean = calc_statistical_mean(y_values)
+    D_x = calc_dispersion(x_values)
+    D_y = calc_dispersion(y_values)
+    return (x_y_mean - x_mean * y_mean) / (pow(D_x, 1/2) * pow(D_y, 1/2))
+
+
