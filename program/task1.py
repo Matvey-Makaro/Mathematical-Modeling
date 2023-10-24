@@ -7,6 +7,43 @@ from RVGenerator import *
 import matplotlib.pyplot as plt
 
 
+class ZGenerator:
+    def __init__(self, distr_func, x, y, z, low, high):
+        self._distr_func = distr_func
+        self._x = x
+        self._y = y
+        self._z = z
+        self._inverse_func = None
+        self._low = low
+        self._high = high
+
+        self._calc_inverse_func()
+
+    def generate(self, z_val: float) -> float:
+        uniform_rv = random.uniform(0, 1)
+        rv = sp.simplify(self._inverse_func.subs(self._y, uniform_rv).subs(self._z, z_val).evalf())
+        return float(rv)
+
+    def get_inverse_func(self):
+        return self._inverse_func
+
+    def _calc_inverse_func(self):
+        solutions = sp.solve(self._distr_func - self._y, self._x)
+        self._inverse_func = self._find_suitable_solution(solutions)
+        if self._inverse_func is None:
+            raise RuntimeError("Failed to find the inverse function")
+
+    def _find_suitable_solution(self, solutions: list):
+        points_to_check = [0, 0.25, 0.5, 0.75, 1]
+        for s in solutions:
+            for point in points_to_check:
+                val = sp.simplify(s.subs(self._y, point).subs(self._z, self._low).evalf())
+                if isinstance(val, sp.core.numbers.Float):
+                    val = float(val)
+                    if val >= self._low and val <= self._high:
+                        return s
+        return None
+
 def read_distribution_func() -> str:
     distr_func_str = input("Введите многочлен в формате Python (например, 'x**2 + 2*x - 3'): ")
     return str_to_func(distr_func_str)
@@ -21,16 +58,11 @@ def str_to_func(func_str: str):
     return distr_func
 
 
-def create_plot_2d(f_x, f_z, x, z, x_values, z_values):
+def create_plot_2d(f_x, x, x_values):
     vals = np.linspace(0, 1, 100)
-    # f_x_values = [f_x.subs(x, v).evalf() for v in vals]
-    f_z_values = [f_z.subs(z, v).evalf() for v in vals]
-
-    # plt.plot(vals, f_x_values, color='red')
-    plt.plot(vals, f_z_values, color='green')
-    # plt.hist(x_values, 30, color='blue', density=1)
-    plt.hist(z_values, 30, color='black', density=1)
-
+    f_x_values = [float(f_x.subs(x, v).evalf()) for v in vals]
+    plt.plot(vals, f_x_values, color='red')
+    plt.hist(x_values, 30, color='blue', density=1)
     plt.show()
 
 
@@ -50,7 +82,7 @@ def get_rv_generator(F, var, low, high) -> RVGenerator:
 
 
 def task1() -> None:
-    random.seed(1000)
+    # random.seed(1000)
     x, y, z = sp.symbols("x y z")
 
     low = 0
@@ -65,6 +97,7 @@ def task1() -> None:
 
     F_x = sp.integrate(f_x, (x, 0, x))
     F_z = sp.integrate(f_z, (z, 0, z))
+    F_z_if_x = sp.integrate(f_z_if_x, (z, 0, z))
 
     print("f(x):", f_x)
     print("f(z): ", f_z)
@@ -72,6 +105,7 @@ def task1() -> None:
     print("f(z|x):", f_z_if_x)
     print("F(x): ", F_x)
     print("F(z):", F_z)
+    print("F(z|x):", F_z_if_x)
 
     if f_x != f_x_if_z:
         print("Составляющие двумерной НСВ зависимы т.к. f(x) != f(x|z)")
@@ -88,14 +122,19 @@ def task1() -> None:
     print("D(x) = ", D_x)
     print("D(z) = ", D_z)
 
-    r = calc_theor_correlation(f_x, x, low, high, f_z, z, low, high)
+    r = calc_theor_correlation(f_x_z, f_x, x, low, high, f_z, z, low, high)
     print("r: ", r)
 
-    num_of_vals_to_generate = 5000
+    num_of_vals_to_generate = 2000
     x_generator = get_rv_generator(F_x, x, low, high)
     x_values = [x_generator.generate() for _ in range(num_of_vals_to_generate)]
-    z_generator = get_rv_generator(F_z, z, low, high)
-    z_values = [z_generator.generate() for _ in range(num_of_vals_to_generate)]
+
+    z_values = []
+    z_generator = ZGenerator(F_z_if_x, z, y, x, low, high)
+    for x in x_values:
+        z_values.append(z_generator.generate(x))
+
+    x, y, z = sp.symbols("x y z")
 
     stat_M_x = calc_statistical_mean(x_values)
     stat_M_z = calc_statistical_mean(z_values)
@@ -111,36 +150,12 @@ def task1() -> None:
     stat_r = calc_correlation(x_values, z_values)
     print("stat_r: ", stat_r)
 
-    create_plot_2d(f_x, f_z, x, z, x_values, z_values)
+    create_plot_2d(f_x, x, x_values)
+    create_plot_2d(f_z, z, z_values)
 
-    # x = np.linspace(0, 1, 100)
-    # y = np.sin(x)
-    # plt.plot(x, y)
-    # plt.show()
-    # create_histogram(x_values, 30)
-
-    statistical_mean = calc_statistical_mean(x_values)
-    practical_dispersion = calc_dispersion(x_values)
-    distr_density = calc_distr_density(distr_func, x)
-    print("distr_density: ", distr_density)
-    math_expectation = calc_math_expectation(distr_density, x, low, high)
-    theoretical_dispersion = calc_theoretical_dispersion(distr_density, x, low, high)
-
-    print("Statistical mean: ", statistical_mean)
-    print("Math expectation: ", math_expectation)
-    print("Practical dispersion: ", practical_dispersion)
-    print("Theoretical dispersion", theoretical_dispersion)
-
-    print(f"Доверительный интервал для мат. ожидания: ", calc_mean_confidence_interval(x_values, 0.99))
-    print(f"Доверительный интервал для среднеквадратичного отклонения: ",
-          calc_standard_deviation_conf_interval(x_values, 0.99))
-
-    statistical_series = build_statistical_series(x_values, 500)
-    is_true = test_hypothesis(statistical_series, distr_func, x, 0.7)
-
-    if is_true:
-        print("Нет оснований отвергать гипотезу о том, что генеральная совокупность распределена по "
-              "данному закону распределения.")
-    else:
-        print("Нет оснований принять гипотезу о том, что генеральная совокупность распределена "
-              "по данному закону распределения")
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    hist, _, _ = np.histogram2d(x_values, z_values, bins=[10, 10])
+    ax.hist(hist)
+    fig.show()
+    plt.show()

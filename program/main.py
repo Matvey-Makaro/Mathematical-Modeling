@@ -8,8 +8,8 @@ from task2 import task2
 
 
 def main() -> None:
-    # task1()
-    task2()
+    task1()
+    # task2()
 
     # # Введите многочлен с консоли
     # # polynomial_str = input("Введите многочлен в формате Python (например, 'x**2 + 2*x - 3'): ")
