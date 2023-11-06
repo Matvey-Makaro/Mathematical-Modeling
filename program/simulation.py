@@ -290,26 +290,11 @@ def simulation_solution() -> None:
     simulation.simulate()
     statistics = simulation.get_result()
 
-    print("statistics.total_load_time: ", statistics.total_load_time)
-    print("statistics.total_average_queue_time: ", statistics.total_average_queue_time)
-
-    print(statistics.load_times[0] / (simulation_time * stage1_n))
-    print(statistics.load_times[1] / (simulation_time))
-    print(statistics.load_times[2] / (simulation_time * stage3_n))
-    print(statistics.total_load_time / (simulation_time * (stage1_n + 1 + stage3_n)))
-
-    sum = 0
-    for c in simulation._handled_customers:
-        sum += c.processing_times[0]
-
-    sum /= len(simulation._handled_customers)
-    print("SUm: ", sum)
-
     num_of_stages = 3
     for i in range(num_of_stages):
-        print("Stage " + str(i))
-        print("Load coeff: ", statistics.load_coeffs[i])
-        print("L_queue: ", statistics.L_queue[i])
-        print("L_obs: ", statistics.L_obs[i])
-        print("L_smo: ", statistics.L_smo[i])
-        print("t_smo: ", statistics.t_smo[i])
+        print("Phase " + str(i + 1))
+        print("Коэффициент загрузки(load_coeff): ", statistics.load_coeffs[i])
+        print("Среднее число посетителей в очереди(L_queue): ", statistics.L_queue[i])
+        print("Среднее число обслуживаемых посетителей(L_obs): ", statistics.L_obs[i])
+        print("Среднее число посетителей(L_smo): ", statistics.L_smo[i])
+        print("Среднее время, затрачиваемое посетителем(t_smo): ", statistics.t_smo[i])
